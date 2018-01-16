@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "ViewController.unzipFile(for:):ViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "model.directoryURL().path">
+            </PersistentString>
+            <PersistentString
+               value = "SSZipArchive.unzipFile(atPath: model.destinationURL().path, toDestination: model.directoryURL().path, delegate: self)">
+            </PersistentString>
+            <PersistentString
+               value = "model.destinationURL()">
+            </PersistentString>
+            <PersistentString
+               value = "error.localizedDescription">
+            </PersistentString>
+            <PersistentString
+               value = "filePath.absoluteString">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "VirtualObject.loadModel():VirtualObject.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "self.modelURL?.absoluteString">
+            </PersistentString>
+            <PersistentString
+               value = "FileManager.default.fileExists(atPath: self.modelURL?.path)">
+            </PersistentString>
+            <PersistentString
+               value = "self.modelURL">
+            </PersistentString>
+            <PersistentString
+               value = "self.modelURL?.lastPathComponent">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "closure #1 in ViewController.loadVirtualObject(object:):ViewController.swift">
+      </ContextState>
+      <ContextState
+         contextName = "ViewController.showModel(with:):ViewController.swift">
+      </ContextState>
+      <ContextState
+         contextName = "ViewController.setNewVirtualObjectPosition(_:):ViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "VirtualObjectsManager.shared.getVirtualObjectSelected() == nil">
+            </PersistentString>
+            <PersistentString
+               value = "object.position">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "SceneLocationView.updatePositionAndScaleOfLocationNode(locationNode:initialSetup:animated:duration:):SceneLocationView.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "annotationNode.annotationNode.scale">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "closure #1 in ViewController.getCurrentAltitude():ViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "self.altitude">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "ViewController.downloadModel(for:):ViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "print(model.modelUrl)">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "ViewController.loadVirtualObject(object:):ViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "self.altitude">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "closure #1 in ViewController.downloadModel(for:):ViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "model.destinationURL().hasDirectoryPath">
+            </PersistentString>
+            <PersistentString
+               value = "request.progress.isPausable">
+            </PersistentString>
+            <PersistentString
+               value = "print(FileManager.default.fileExists(atPath: url.absoluteString))">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "closure #3 in ViewController.downloadModel(for:):ViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "model.temporaryURL">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "CLLocation.translation(toLocation:):CLLocation+Extensions.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "location.altitude">
+            </PersistentString>
+            <PersistentString
+               value = "self.altitude">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "LocationAnnotationNode.init(location:object:):LocationNode.swift">
+      </ContextState>
+      <ContextState
+         contextName = "ModelsTableViewController.loadModels():ModelsTableViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "ref.child(&quot;models&quot;)">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "ModelDownloader.downloadZipFile():ModelDownloader.swift">
+      </ContextState>
+      <ContextState
+         contextName = "closure #4 in ViewController.extractZipFile(for:):ViewController.swift">
+      </ContextState>
+      <ContextState
+         contextName = "closure #1 in ModelsTableViewController.loadModels():ModelsTableViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "child as! String">
+            </PersistentString>
+            <PersistentString
+               value = "snapshot.value as! [String]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "ViewController.extractZipFile(for:):ViewController.swift">
+      </ContextState>
+      <ContextState
+         contextName = "closure #3 in ViewController.extractZipFile(for:):ViewController.swift">
+      </ContextState>
+      <ContextState
+         contextName = "closure #1 in closure #1 in ViewController.downloadModel(for:):ViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "request.progress.isFinished">
+            </PersistentString>
+            <PersistentString
+               value = "response.result">
+            </PersistentString>
+            <PersistentString
+               value = "print(response.result)">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "Model.isSaved():ModelDownloader.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "self.destinationURL().absoluteString">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>
