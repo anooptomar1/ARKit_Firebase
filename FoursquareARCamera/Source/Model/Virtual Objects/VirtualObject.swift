@@ -14,10 +14,11 @@ public class VirtualObject: SCNNode {
     static let ROOT_NAME = "Virtual object root node"
     
     var id: String = ""
+    var modelId: String = ""
     var modelURL: URL?
     var thumbnailURL: URL? = nil
     var audioURL: URL? = nil
-    var defaultScale: CGFloat = 1
+    var defaultScale: SCNVector3 = SCNVector3One
     var location = CLLocation()
     
     var viewController: ViewController?
@@ -28,13 +29,14 @@ public class VirtualObject: SCNNode {
         self.name = VirtualObject.ROOT_NAME
     }
     
-    init(with object: ModelObject, thumbnailURL: URL? = nil, audioURL: URL? = nil, location: CLLocation) {
+    init(id: String, with object: ModelObject, thumbnailURL: URL? = nil, audioURL: URL? = nil, location: CLLocation) {
         super.init()
-        self.id = object.id
+        self.id = id
+        self.modelId = object.id
         self.modelURL = URL(string: object.modelUrl)!
         self.thumbnailURL = thumbnailURL
         self.audioURL = audioURL
-        self.scale = SCNVector3(object.scale, object.scale, object.scale)
+        self.defaultScale = SCNVector3(object.scale, object.scale, object.scale)
         self.location = location
     }
     
@@ -58,6 +60,7 @@ public class VirtualObject: SCNNode {
                 child.movabilityHint = .movable
                 wrapperNode.addChildNode(child)
             }
+            wrapperNode.scale = self.defaultScale
             self.addChildNode(wrapperNode)
         } catch {
             print(error.localizedDescription)
