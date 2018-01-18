@@ -21,7 +21,8 @@ import RxRealm
 import SSZipArchive
 import ARKit
 import CoreLocation
-
+import Firebase
+import ObjectMapper
 
 class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, SceneLocationViewDelegate, SSZipArchiveDelegate {
     
@@ -32,6 +33,8 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
     var subway =  CLLocation()
     
     let mapView = MKMapView()
+    
+    var geoFire: GeoFire!
 
     var userAnnotation: MKPointAnnotation?
     var locationEstimateAnnotation: MKPointAnnotation?
@@ -62,8 +65,12 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
     let updateScheduler = SerialDispatchQueueScheduler(internalSerialQueueName: "Test.ARKit.CoreLocation.updateQueue")
     var objects = Variable<[VirtualObject]>([])
     let DEFAULT_DISTANCE_CAMERA_TO_OBJECTS = Float(10)
+
+    var models: Variable<[Model]> = Variable([])
     
     private var altitude: Double = 50
+    
+    var isModelDisplaying = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -77,8 +84,12 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
         // Bind objects
         bindObjects()
         
-        // Get current altitude of device
-        getCurrentAltitude()
+        // Load models
+        loadModelsList()
+        
+        // Initialize GeoFire
+        let firebaseRef = Database.database().reference().child("feeds")
+        geoFire = GeoFire(firebaseRef: firebaseRef)
     }
     
     private func checkInternetConnectivity() {
@@ -162,19 +173,21 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
         self.sceneLocationView.updatePosition(object: object)
     }
     
-    private func getCurrentAltitude() {
+    private func loadModelsList() {
         
-        let targetLocation = CLLocation(latitude: 90, longitude: 180)
+        // Load Firebase Feeds
+        getModels().subscribe(onNext: { (models) in
+            self.models.value.append(contentsOf: models)
+        }, onError: { (error) in
+            print(error.localizedDescription)
+        }).disposed(by: disposeBag)
+    }
+    
+    private func getModels() -> Observable<[Model]> {
         
-        var locationManager = CLLocationManager()
-        locationManager.rx.didUpdateLocations
-            .subscribe(onNext: { (locations) in
-                self.altitude = locationManager.location!.altitude
-                locationManager.stopUpdatingLocation()
-            }, onCompleted: {
-                print("Completed")
-            }).disposed(by: disposeBag)
-        locationManager.startUpdatingLocation()
+        let ref = Database.database().reference().child("models")
+        return ref.rx_observeSingleEvent(of: .value)
+            .map{Mapper<Model>().mapArray(snapshot: $0)}
     }
     
     // MARK: Virtual Object Manipulation
@@ -303,7 +316,6 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
         
         if filterPosition {
             let averagedDistancePos = cameraWorldPos + cameraToPosition
-            
             object.position = averagedDistancePos
         } else {
             object.position = cameraWorldPos + cameraToPosition
@@ -322,7 +334,9 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
             // download model assets
             if model.isSaved() {
                 print("Already exists.")
-                self.showModel(with: model)
+                let currentCoordinate = self.sceneLocationView.currentLocation()!
+                let id = "\(model.id)_\(Int(Date().timeIntervalSince1970))"
+                self.showModel(id: id, at: currentCoordinate.coordinate, isNeedToPost: true)
             } else {
                 self.downloadModel(for: model)
             }
@@ -333,22 +347,43 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
         self.present(navVC, animated: true, completion: nil)
     }
     
-    private func showModel(with model: Model) {
+    private func showModel(id: String, at coordinate: CLLocationCoordinate2D, isNeedToPost: Bool = false) {
+        
+        // Load model
+        guard let modelId = id.components(separatedBy: "_").first else { return }
+        
         let realm = try! Realm()
-        let object = realm.objects(ModelObject.self).filter({$0.id == model.uploadId}).first!
-
-        let coordinate = CLLocationCoordinate2D(latitude: model.lat, longitude: model.lng)
-        let virtualObject = VirtualObject(with: object, location: CLLocation.init(coordinate: coordinate, altitude: self.altitude))
+        let object = realm.objects(ModelObject.self).filter({$0.id == modelId}).first!
+        let location = CLLocation.init(coordinate: coordinate, altitude: sceneLocationView.currentLocation()!.altitude - 1.4)
+        
+        isModelDisplaying = false
+        
+        let virtualObject = VirtualObject(id: id, with: object, location: location)
         self.objects.value.append(virtualObject)
+        
+        // Post to Firebase Database
+        if isNeedToPost {
+            geoFire.setLocation(location, forKey: id) { (error) in
+                if error == nil {
+                    print("Posted.")
+                } else {
+                    print(error!.localizedDescription)
+                }
+            }
+        }
     }
     
-    private func downloadModel(for model: Model) {
+    private func downloadModel(for model: Model, showAt location: CLLocation? = nil) {
+        
+        isModelDisplaying = true
+        
         let downloader = ModelDownloader(model: model)
         downloader.downloadZipFile()
             .observeOn(MainScheduler.instance)
             .subscribe(onNext: { (request) in
                 request.resume()
             }, onError: { (error) in
+                self.isModelDisplaying = false
                 print(error.localizedDescription)
             }, onCompleted: {
                 print("Downloaded .zip file")
@@ -365,16 +400,22 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
                     fileSize = dict.fileSize()
                     print(fileSize)
                 } catch {
+                    self.isModelDisplaying = false
                     print("Error: \(error)")
                 }
-                self.extractZipFile(for: model)
+                self.extractZipFile(for: model, showAt: location)
             }).disposed(by: disposeBag)
     }
     
-    private func extractZipFile(for model: Model) {
+    private func putModel(for model: Model) {
+        
+    }
+    
+    private func extractZipFile(for model: Model, showAt location: CLLocation?) {
         unzipFile(for: model).subscribe(onNext: { (progress) in
             print("subs")
         }, onError: { (error) in
+            self.isModelDisplaying = false
             print(error.localizedDescription)
         }, onCompleted: {
             print("Unzipping completed")
@@ -397,12 +438,15 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
                                 realm.add(modelObject)
                                 try! realm.commitWrite()
                                 
-                                self.showModel(with: model)
+                                let currentCoordinate = location ?? self.sceneLocationView.currentLocation()!
+                                let id = "\(model.id)_\(Int(Date().timeIntervalSince1970))"
+                                self.showModel(id: id, at: currentCoordinate.coordinate, isNeedToPost: true)
                             }
                         }
                     }
                 }
             } catch {
+                self.isModelDisplaying = false
                 print("Error while enumerating files.")
             }
         }).disposed(by: disposeBag)
@@ -458,6 +502,34 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Release any cached data, images, etc that aren't in use.
+    }
+    
+    
+    // MARK: Geolocation
+    
+    func getNearbyLocations(_ currentLocation: CLLocation) {
+        guard let center = sceneLocationView.currentLocation() else { return }
+        // Query locations at [37.7832889, -122.4056973] with a radius of 600 meters
+        let circleQuery = geoFire.query(at: center, withRadius: 0.1)
+        
+        circleQuery?.observe(.keyEntered, with: { (key, location) in
+            if let key = key, let location = location, !self.isModelDisplaying {
+             
+                // return if already exists in scenelocationview
+                if self.objects.value.contains(where: {return $0.id == key}) { return }
+                guard let id = key.components(separatedBy: "_").first else { return }
+                guard let model = self.models.value.filter({$0.id == id}).first else { return }
+                if !model.isSaved() {
+                    self.downloadModel(for: model, showAt: location)
+                } else {
+                    self.showModel(id: key, at: location.coordinate)
+                }
+            }
+        })
+        
+        circleQuery?.observeReady({
+            
+        })
     }
     
     // MARK: Get foursquare locations
@@ -657,6 +729,8 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
 //        self.getFoursquareLocations(location)
         
         DDLogDebug("add scene location estimate, position: \(position), location: \(location.coordinate), accuracy: \(location.horizontalAccuracy), altitude: \(location.altitude), date: \(location.timestamp)")
+        
+        getNearbyLocations(sceneLocationView.currentLocation()!)
     }
     
     func sceneLocationViewDidRemoveSceneLocationEstimate(sceneLocationView: SceneLocationView, position: SCNVector3, location: CLLocation) {

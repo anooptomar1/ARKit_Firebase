@@ -25,7 +25,7 @@ protocol ModelDownloaderDelegate: class {
 
 class Model: Mappable {
     
-    var uploadId = ""
+    var id = ""
     var title = ""
     var modelUrl = ""
     var audioUrl = ""
@@ -33,18 +33,14 @@ class Model: Mappable {
     var armodelUrl = ""
     var temporaryURL = ""
     var scale: Double = 1
-    var lat: Double = 0
-    var lng: Double = 0
     
     func mapping(map: Map) {
-        uploadId <- map["id"]
+        id <- map["id"]
         title <- map["title"]
-        modelUrl <- map["modelUrl"]
+        modelUrl <- map["url"]
         audioUrl <- map["audio"]
         imageUrl <- map["image"]
         scale <- map["scale"]
-        lat <- map["lat"]
-        lng <- map["lng"]
     }
     
     required init?(map: Map) {
@@ -55,7 +51,7 @@ class Model: Mappable {
 //        return FileManager.default.fileExists(atPath: self.destinationURL().path)
         let realm = try! Realm()
         let models = realm.objects(ModelObject.self)
-        return models.contains(where: {self.uploadId == $0.id})
+        return models.contains(where: {self.id == $0.id})
     }
     
     func directoryURL() -> URL {
@@ -65,7 +61,7 @@ class Model: Mappable {
             true
             ).first ?? ""
         let documentsURL = URL(fileURLWithPath: documentsPath)
-        let directory: String = "ar_assets/asset_\(self.uploadId)_files"
+        let directory: String = "ar_assets/asset_\(self.id)_files"
         let extractedFilesURL = documentsURL.appendingPathComponent(directory)
         return extractedFilesURL
     }
@@ -77,9 +73,9 @@ class Model: Mappable {
             true
             ).first ?? ""
         let documentsURL = URL(fileURLWithPath: documentsPath)
-        let directory: String = "ar_assets/asset_\(self.uploadId)_files"
+        let directory: String = "ar_assets/asset_\(self.id)_files"
         let extractedFilesURL = documentsURL.appendingPathComponent(directory)
-        let fileUrl = extractedFilesURL.appendingPathComponent(self.uploadId + ".zip")
+        let fileUrl = extractedFilesURL.appendingPathComponent(self.id + ".zip")
         return fileUrl
     }
 }
@@ -95,11 +91,10 @@ class ModelObject: Object {
         
         let object = ModelObject()
         
-        object.id = model.uploadId
+        object.id = model.id
         object.title = model.title
         object.modelUrl = modelUrl.standardizedFileURL.absoluteString
         object.scale = CGFloat(model.scale)
-        object.coordinate = CLLocationCoordinate2D(latitude: model.lat, longitude: model.lng)
         
         return object
     }
@@ -125,9 +120,9 @@ final class ModelDownloader {
             true
             ).first ?? ""
         let documentsURL = URL(fileURLWithPath: documentsPath)
-        let directory: String = "ar_assets/asset_\(model.uploadId)_files"
+        let directory: String = "ar_assets/asset_\(model.id)_files"
         let extractedFilesURL = documentsURL.appendingPathComponent(directory)
-        let destinationUrl = extractedFilesURL.appendingPathComponent(model.uploadId + ".zip")
+        let destinationUrl = extractedFilesURL.appendingPathComponent(model.id + ".zip")
         let fileManager = FileManager.default
         
         do {
@@ -150,9 +145,9 @@ final class ModelDownloader {
             true
             ).first ?? ""
         let documentsURL = URL(fileURLWithPath: documentsPath)
-        let directory: String = "ar_assets/asset_\(model.uploadId)_files"
+        let directory: String = "ar_assets/asset_\(model.id)_files"
         let extractedFilesURL = documentsURL.appendingPathComponent(directory)
-        let fileUrl = extractedFilesURL.appendingPathComponent(model.uploadId + ".zip")
+        let fileUrl = extractedFilesURL.appendingPathComponent(model.id + ".zip")
         
         return FileManager.default.fileExists(atPath: fileUrl.absoluteString)
     }

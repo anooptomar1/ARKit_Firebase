@@ -40,6 +40,25 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
+         contextName = "closure #1 in ViewController.getNearbyLocations(_:):ViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "self.objects.value">
+            </PersistentString>
+            <PersistentString
+               value = "self.models.value">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "ViewController.showModel(id:at:isNeedToPost:):ViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "object.id">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
          contextName = "closure #1 in ViewController.loadVirtualObject(object:):ViewController.swift">
       </ContextState>
       <ContextState
@@ -55,6 +74,9 @@
                value = "object.position">
             </PersistentString>
          </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "static ModelObject.modelObject(with:modelUrl:):ModelDownloader.swift">
       </ContextState>
       <ContextState
          contextName = "SceneLocationView.updatePositionAndScaleOfLocationNode(locationNode:initialSetup:animated:duration:):SceneLocationView.swift">
@@ -89,6 +111,14 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
+         contextName = "closure #1 in closure #1 in ViewController.getNearbyLocations(_:):ViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
          contextName = "closure #1 in ViewController.downloadModel(for:):ViewController.swift">
          <PersistentStrings>
             <PersistentString
@@ -101,6 +131,9 @@
                value = "print(FileManager.default.fileExists(atPath: url.absoluteString))">
             </PersistentString>
          </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "closure #3 in ViewController.extractZipFile(for:showAt:):ViewController.swift">
       </ContextState>
       <ContextState
          contextName = "closure #3 in ViewController.downloadModel(for:):ViewController.swift">
