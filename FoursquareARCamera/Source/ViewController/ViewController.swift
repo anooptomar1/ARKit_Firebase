@@ -54,6 +54,8 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
     
     var infoLabel = UILabel()
     
+    let plusButton = UIButton()
+    
     var updateInfoLabelTimer: Timer?
     
     var loaded: Bool = false
@@ -68,7 +70,7 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
 
     var models: Variable<[Model]> = Variable([])
     
-    private var altitude: Double = 50
+    var currentLocation: CLLocation?
     
     var isModelDisplaying = false
     
@@ -86,6 +88,9 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
         
         // Load models
         loadModelsList()
+        
+        // Get current location in best accuracy
+//        getCurrentLocation()
         
         // Initialize GeoFire
         let firebaseRef = Database.database().reference().child("feeds")
@@ -111,9 +116,6 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
         
         // Add Plus Button
         let imgPlus = UIImage.init(named: "plus")
-        let plusButton = UIButton()
-        
-        
         plusButton.frame = CGRect(x: self.view.frame.width / 2 - 40,
                                   y: self.view.frame.height-120,
                                   width: 80,
@@ -121,13 +123,14 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
         plusButton.center.x = self.view.center.x
         plusButton.setImage(imgPlus, for: .normal)
         plusButton.addTarget(self, action: #selector(plusButtonTapped), for: .touchUpInside)
+        plusButton.isEnabled = false // It will be enabled once you get user's current
         
+        // Add Scene Location
         
         sceneLocationView.addSubview(plusButton)
         sceneLocationView.showAxesNode = true
         sceneLocationView.locationDelegate = self
         
-        // Add Scene Location
         view.addSubview(sceneLocationView)
         
         // Add the compass to the View
@@ -188,6 +191,23 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
         let ref = Database.database().reference().child("models")
         return ref.rx_observeSingleEvent(of: .value)
             .map{Mapper<Model>().mapArray(snapshot: $0)}
+    }
+    
+    private func getCurrentLocation() {
+        var locationManager = CLLocationManager()
+        locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation
+        locationManager.rx.didUpdateLocations
+            .subscribe(onNext: { (locations) in
+                if let location = locations.first, location.horizontalAccuracy <= 10, location.verticalAccuracy < 5 {
+                    self.currentLocation = location
+                    self.plusButton.isEnabled = true
+                    locationManager.stopUpdatingLocation()
+                    locationManager.delegate = nil
+                }
+            }, onCompleted: {
+                print("Completed")
+            }).disposed(by: disposeBag)
+        locationManager.startUpdatingLocation()
     }
     
     // MARK: Virtual Object Manipulation
@@ -334,9 +354,8 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
             // download model assets
             if model.isSaved() {
                 print("Already exists.")
-                let currentCoordinate = self.sceneLocationView.currentLocation()!
                 let id = "\(model.id)_\(Int(Date().timeIntervalSince1970))"
-                self.showModel(id: id, at: currentCoordinate.coordinate, isNeedToPost: true)
+                self.showModel(id: id, at: self.currentLocation!.coordinate, isNeedToPost: true)
             } else {
                 self.downloadModel(for: model)
             }
@@ -354,7 +373,7 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
         
         let realm = try! Realm()
         let object = realm.objects(ModelObject.self).filter({$0.id == modelId}).first!
-        let location = CLLocation.init(coordinate: coordinate, altitude: sceneLocationView.currentLocation()!.altitude - 1.4)
+        let location = CLLocation.init(coordinate: coordinate, altitude: self.currentLocation!.altitude - 1.4)
         
         isModelDisplaying = false
         
@@ -375,6 +394,7 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
     
     private func downloadModel(for model: Model, showAt location: CLLocation? = nil) {
         
+        print("Downloading assets.")
         isModelDisplaying = true
         
         let downloader = ModelDownloader(model: model)
@@ -438,7 +458,7 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
                                 realm.add(modelObject)
                                 try! realm.commitWrite()
                                 
-                                let currentCoordinate = location ?? self.sceneLocationView.currentLocation()!
+                                let currentCoordinate = location ?? self.currentLocation!
                                 let id = "\(model.id)_\(Int(Date().timeIntervalSince1970))"
                                 self.showModel(id: id, at: currentCoordinate.coordinate, isNeedToPost: true)
                             }
@@ -508,7 +528,7 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
     // MARK: Geolocation
     
     func getNearbyLocations(_ currentLocation: CLLocation) {
-        guard let center = sceneLocationView.currentLocation() else { return }
+        guard let center = self.currentLocation else { return }
         // Query locations at [37.7832889, -122.4056973] with a radius of 600 meters
         let circleQuery = geoFire.query(at: center, withRadius: 0.1)
         
@@ -639,7 +659,7 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
     
     @objc func updateUserLocation() {
         
-        if let currentLocation = sceneLocationView.currentLocation() {
+        if let currentLocation = self.currentLocation {
             DispatchQueue.main.async {
                 if let bestEstimate = self.sceneLocationView.bestLocationEstimate(),
                     let position = self.sceneLocationView.currentScenePosition() {
@@ -729,8 +749,13 @@ class ViewController: UIViewController, MKMapViewDelegate, MGLMapViewDelegate, S
 //        self.getFoursquareLocations(location)
         
         DDLogDebug("add scene location estimate, position: \(position), location: \(location.coordinate), accuracy: \(location.horizontalAccuracy), altitude: \(location.altitude), date: \(location.timestamp)")
-        
-        getNearbyLocations(sceneLocationView.currentLocation()!)
+        if location.horizontalAccuracy < 10, location.verticalAccuracy < 5 {
+                self.currentLocation = location
+        }
+        if self.currentLocation != nil {
+            self.plusButton.isEnabled = true
+            getNearbyLocations(self.currentLocation!)
+        }
     }
     
     func sceneLocationViewDidRemoveSceneLocationEstimate(sceneLocationView: SceneLocationView, position: SCNVector3, location: CLLocation) {
